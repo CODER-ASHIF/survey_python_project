@@ -50,13 +50,17 @@ def add_survey_response():
 
 # Function to show all survey responses
 def show_all_responses():
-    if not os.path.exists(FILE_PATH):
+    if not os.path.exists(FILE_PATH) or os.stat(FILE_PATH).st_size == 0:
         print("\n⚠️ No survey responses found!")
         return
     
     print("\n📌 Survey Responses:")
     with open(FILE_PATH, "r") as file:
-        print(file.read())
+        content = file.read().strip()
+        if not content:
+            print("\n⚠️ No survey responses found!")
+        else:
+            print(content)
 
 # Function to search response by user ID or name
 def search_response():
@@ -78,15 +82,67 @@ def search_response():
 
 # Function to update survey response
 def update_response():
-    print("Update functionality needs to be modified for new format.")
+    search_query = input("Enter User ID or Name to update: ").strip().lower()
+    if not os.path.exists(FILE_PATH) or os.stat(FILE_PATH).st_size == 0:
+        print("\n⚠️ No survey responses found!")
+        return
+    
+    with open(FILE_PATH, "r") as file:
+        lines = file.readlines()
+    
+    updated_lines = []
+    record = ""
+    found = False
+    for line in lines:
+        if "----------------------------------------" in line:
+            if search_query in record.lower():
+                print("\n✅ Match Found! Enter new details:")
+                add_survey_response()
+                found = True
+            else:
+                updated_lines.append(record)
+            record = ""
+        record += line
+    
+    if found:
+        with open(FILE_PATH, "w") as file:
+            file.writelines(updated_lines)
+        print("\n✅ Survey Response Updated Successfully!")
+    else:
+        print("\n❌ No matching record found!")
 
 # Function to delete a survey response
 def delete_response():
-    print("Delete functionality needs to be modified for new format.")
+    search_query = input("Enter User ID or Name to delete: ").strip().lower()
+    if not os.path.exists(FILE_PATH) or os.stat(FILE_PATH).st_size == 0:
+        print("\n⚠️ No survey responses found!")
+        return
+    
+    with open(FILE_PATH, "r") as file:
+        lines = file.readlines()
+    
+    updated_lines = []
+    record = ""
+    found = False
+    for line in lines:
+        if "----------------------------------------" in line:
+            if search_query in record.lower():
+                print("\n✅ Survey Response Deleted Successfully!")
+                found = True
+            else:
+                updated_lines.append(record)
+            record = ""
+        record += line
+    
+    if found:
+        with open(FILE_PATH, "w") as file:
+            file.writelines(updated_lines)
+    else:
+        print("\n❌ No matching record found!")
 
 # Function to show statistics
 def show_statistics():
-    if not os.path.exists(FILE_PATH):
+    if not os.path.exists(FILE_PATH) or os.stat(FILE_PATH).st_size == 0:
         print("\n⚠️ No survey responses found!")
         return
     
@@ -120,7 +176,7 @@ def main():
         elif choice == "6":
             show_statistics()
         elif choice == "7":
-            print("\n📌 Exiting Survey System. Goodbye!\n")
+            print("\n📌 Exiting Survey System. Thanks For Your Valuable Time!\n")
             break
         else:
             print("\n⚠️ Invalid choice! Please enter a valid option.")

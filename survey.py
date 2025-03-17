@@ -46,76 +46,97 @@ def add_survey_response():
         file.write(f"Vehicles: {vehicles}\n")
         file.write("----------------------------------------\n")
     
-    print("\n✅ Survey Response Added Successfully!\n")
+    print("\n Survey Response Added Successfully!\n")
+
+# Function to check if file exists and is not empty
+def file_exists():
+    return os.path.exists(FILE_PATH) and os.stat(FILE_PATH).st_size > 0
+
 
 # Function to show all survey responses
 def show_all_responses():
-    if not os.path.exists(FILE_PATH) or os.stat(FILE_PATH).st_size == 0:
-        print("\n⚠️ No survey responses found!")
+    if not file_exists():
+        print("\nNo survey responses found!")
         return
-    
-    print("\n📌 Survey Responses:")
     with open(FILE_PATH, "r") as file:
         content = file.read().strip()
         if not content:
-            print("\n⚠️ No survey responses found!")
+            print("\nNo survey responses found!")
         else:
-            print(content)
+            print("\nSurvey Responses:\n" + content)
 
 # Function to search response by user ID or name
 def search_response():
-    search_query = input("Enter User ID or Name to search: ").strip().lower()
-    found = False
-    with open(FILE_PATH, "r") as file:
-        lines = file.readlines()
-        record = ""
-        for line in lines:
-            if "----------------------------------------" in line:
-                if search_query in record.lower():
-                    print("\n✅ Match Found!")
-                    print(record)
-                    found = True
-                record = ""
-            record += line
-    if not found:
-        print("\n❌ No matching record found!")
-
-# Function to update survey response
-def update_response():
-    search_query = input("Enter User ID or Name to update: ").strip().lower()
-    if not os.path.exists(FILE_PATH) or os.stat(FILE_PATH).st_size == 0:
-        print("\n⚠️ No survey responses found!")
+    if not file_exists():
+        print("\nNo survey responses found!")
         return
-    
+    search_query = input("Enter User ID or Name to search: ").strip().lower()
     with open(FILE_PATH, "r") as file:
-        lines = file.readlines()
-    
-    updated_lines = []
-    record = ""
-    found = False
-    for line in lines:
-        if "----------------------------------------" in line:
+        records = file.read().strip().split("\n----------------------------------------\n")
+        for record in records:
             if search_query in record.lower():
-                print("\n✅ Match Found! Enter new details:")
-                add_survey_response()
+                print("\nMatch Found!\n" + record.strip())
+                return
+    print("\nNo matching record found!")
+
+# Function to update a specific field in a survey response
+def update_response():
+    if not file_exists():
+        print("\nNo survey responses found!")
+        return
+    search_query = input("Enter User ID to update: ").strip().lower()
+    with open(FILE_PATH, "r") as file:
+        records = file.read().strip().split("\n----------------------------------------\n")
+    
+    updated_records = []
+    found = False
+    for record in records:
+        if search_query in record.lower():
+            print("\nMatch Found! Current Details:\n" + record.strip())
+            print("\n Select the field to update:")
+            fields = [
+                "1. Name", "2. Age", "3. Father's Name", "4. Marital Status", "5. Occupation",
+                "6. Salary", "7. Gender", "8. Family Members", "9. Home/Building No.", "10. Village",
+                "11. Post Office", "12. Police Station", "13. District", "14. State", "15. Pincode",
+                "16. Mobile Number", "17. Vehicles" 
+            ]
+            for field in fields:
+                print(field)
+            field_choice = input("Enter the number corresponding to the field you want to update: ").strip()
+            field_map = {
+                "1": "Name", "2": "Age", "3": "Father's Name", "4": "Marital Status", "5": "Occupation",
+                "6": "Salary", "7": "Gender", "8": "Family Members", "9": "Home/Building No.", "10": "Village",
+                "11": "Post Office", "12": "Police Station", "13": "District", "14": "State", "15": "Pincode",
+                "16": "Mobile Number", "17": "Vehicles"
+            }
+            
+            if field_choice in field_map:
+                field_to_update = field_map[field_choice]
+                new_value = input(f"Enter new value for {field_to_update}: ").strip()
+                updated_record = "\n".join([
+                    f"{field_to_update}: {new_value}" if line.startswith(field_to_update + ":") else line
+                    for line in record.split("\n")
+                ])
+                updated_records.append(updated_record)
                 found = True
             else:
-                updated_lines.append(record)
-            record = ""
-        record += line
+                print("\nInvalid selection! No changes made.")
+                return
+        else:
+            updated_records.append(record)
     
     if found:
         with open(FILE_PATH, "w") as file:
-            file.writelines(updated_lines)
-        print("\n✅ Survey Response Updated Successfully!")
+            file.write("\n----------------------------------------\n".join(updated_records) + "\n")
+        print("\nSurvey Response Updated Successfully!")
     else:
-        print("\n❌ No matching record found!")
+        print("\nNo matching record found!")
 
 # Function to delete a survey response
 def delete_response():
     search_query = input("Enter User ID or Name to delete: ").strip().lower()
     if not os.path.exists(FILE_PATH) or os.stat(FILE_PATH).st_size == 0:
-        print("\n⚠️ No survey responses found!")
+        print("\n No survey responses found!")
         return
     
     with open(FILE_PATH, "r") as file:
@@ -127,7 +148,7 @@ def delete_response():
     for line in lines:
         if "----------------------------------------" in line:
             if search_query in record.lower():
-                print("\n✅ Survey Response Deleted Successfully!")
+                print("\n Survey Response Deleted Successfully!")
                 found = True
             else:
                 updated_lines.append(record)
@@ -138,21 +159,22 @@ def delete_response():
         with open(FILE_PATH, "w") as file:
             file.writelines(updated_lines)
     else:
-        print("\n❌ No matching record found!")
+        print("\n No matching record found!")
 
 # Function to show statistics
 def show_statistics():
-    if not os.path.exists(FILE_PATH) or os.stat(FILE_PATH).st_size == 0:
-        print("\n⚠️ No survey responses found!")
+    if not file_exists():
+        print("\nNo survey responses found!")
         return
-    
-    count = open(FILE_PATH).read().count("----------------------------------------")
-    print(f"\n📊 Total Number of Surveys Conducted: {count}")
+    with open(FILE_PATH, "r") as file:
+        records = file.read().strip().split("\n----------------------------------------\n")
+        count = len([record for record in records if record.strip()])
+    print(f"\nTotal Number of Surveys Conducted: {count}")
 
 # Main Menu
 def main():
     while True:
-        print("\n📌 Survey System")
+        print("\n==== Survey System Menu ====")
         print("1. Add Survey Response")
         print("2. Show All Survey Responses")
         print("3. Search Survey Response")
@@ -160,9 +182,7 @@ def main():
         print("5. Delete Survey Response")
         print("6. Show Survey Statistics")
         print("7. Exit")
-        
         choice = input("\nEnter your choice: ")
-        
         if choice == "1":
             add_survey_response()
         elif choice == "2":
@@ -170,16 +190,16 @@ def main():
         elif choice == "3":
             search_response()
         elif choice == "4":
-            update_response()
+           update_response()
         elif choice == "5":
             delete_response()
         elif choice == "6":
             show_statistics()
         elif choice == "7":
-            print("\n📌 Exiting Survey System. Thanks For Your Valuable Time!\n")
+            print("\nExiting Survey System. Thanks For Your Valuable Time!\n")
             break
         else:
-            print("\n⚠️ Invalid choice! Please enter a valid option.")
+            print("\nInvalid choice! Please enter a valid option.")
 
 # Run the program
 if __name__ == "__main__":
